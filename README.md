@@ -14,8 +14,35 @@ Command line
 
 Type `hibera` to see command line usage.
 
-Client API
-==========
+MySQL Failover Example
+----------------------
+
+* Start-up script
+
+    hibera run mysql -count 3 -start start-mysql-slave.sh -stop stop-mysql-slave.sh
+
+* start-mysql.sh
+
+    #!/bin/bash
+    MASTER=$(hibera members mysql -limit 1)
+    if [ "x${MASTER:0:1}" = "x*" ]; then
+        # Looks like we're the master.
+        associate-mysql-master-ips.sh
+        start-mysql-master.sh
+    else
+        # Looks like we're a slave (2-3).
+        remove-mysql-master-ips.sh
+        start-mysql-slave.sh $MASTER
+    fi
+
+* stop-mysql.sh
+
+    #!/bin/bash 
+    remove-mysql-master-ips.sh
+    /etc/init.d/mysql stop
+
+Internal API
+============
 
 Locks
 -----
@@ -66,10 +93,12 @@ Groups
     // NOTE: Members returned have a strict ordering (the first member is
     // the leader). You can easily implement a service that needs N leaders
     // by selecting the first N members of the group, which will be stable.
-    //   GET /groups/{group}/ 
+    // Also, if there are members matching {name} -- they will be returned
+    // with a prefix of '*'.
+    //   GET /groups/{group}/?name={name}&limit={name}
     //
     // limit -- Use 0 to specify no limit.
-    members, rev, err := client.Members(group, limit)
+    members, rev, err := client.Members(group, name, limit)
 
     // Wait for group members to change.
     //   GET /watches/{key}?rev={rev}
