@@ -245,55 +245,75 @@ Events
 HTTP API
 ========
 
+/
+---
+
+* GET
+    Fetches basic cluster info. Takes a `base` query parameter for deltas.
+
 /locks/{key}
 ------------
 
 * GET
+
     Get the current state of a lock. The revision is returned in the header `X-Revision`.
 
 * POST
+
     Acquire a lock. Use the query parameter `timeout` to specific some timeout. If the lock is not acquired, an HTTP error is returned.
 
 * DELETE
+
     Release a lock. If the lock is not currently held, an HTTP error is returned.
 
 /groups/{group}
 ---------------
 
 * GET
+
     List group members. Use the query parameter `limit` to list only a limited number of members.
 
 * POST
+
     Join a group. Use the query parameter `name` to use a specific name (otherwise the client socket address is used).
 
 * DELETE
+
     Leave the given group. You may need to specify `name` if you've joined under a different name.
 
 /data/
 ------
 
 * GET
+
     List all data keys. This is massively expensive. Don't do it.
 
 * DELETE
+
     Delete all data in the system.
 
 /data/{key}
 -----------
 
 * GET
+
     Get the current data. The revision is returned in the header `X-Revision`.
 
 * POST
+
     Update the given key. Takes a `rev` query parameter.
 
 * DELETE
+
     Remove all data in the given key. Takes a `rev` query parameter.
 
 /watches/{key}
 --------------
+
 * GET
+
     Watch on the given key. Takes a `rev` query parameter.
 
 * POST
+
     Fires an event on the given key. You may specify a `rev` parameter to fire only if the `rev` matches.
