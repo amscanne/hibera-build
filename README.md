@@ -19,10 +19,13 @@ MySQL Failover Example
 
 * Start-up script
 
+```
     hibera run mysql -count 3 -start start-mysql-slave.sh -stop stop-mysql-slave.sh
+```
 
 * start-mysql.sh
 
+```
     #!/bin/bash
     MASTER=$(hibera members mysql -limit 1)
     if [ "x${MASTER:0:1}" = "x*" ]; then
@@ -34,43 +37,53 @@ MySQL Failover Example
         remove-mysql-master-ips.sh
         start-mysql-slave.sh $MASTER
     fi
+```
 
 * stop-mysql.sh
 
+```
     #!/bin/bash 
     remove-mysql-master-ips.sh
     /etc/init.d/mysql stop
+```
 
 OpenStack Servers
 -----------------
 
 * Initial setup
 
+```
     # Load the config which will stay synchronized.
     cat /etc/nova/nova.conf | hibera set openstack.config
-
+    
     # Create the set of IPs that we will associate with API nodes.
     echo 10.1.1.1 10.1.1.2 10.1.1.3 | hibera set openstack.ips
+```
 
 * /etc/rc.local
 
+```
     # Ensure the configurations are synchronized.
     hibera sync openstack.config --output /etc/nova/nova.conf --exec restart-nova.sh
-
+    
     # Always run three API servers.
     hibera run openstack.api -count 3 -start start-api.sh -stop stop-api.sh
+```
 
 * restart-nova.sh
 
+```
     #!/bin/bash
     # The configuration file has changed.
     restart nova-compute
     restart nova-api
     restart nova-network
     restart nova-scheduler
+```
 
 * start-api.sh
 
+```
     #!/bin/bash
     # Annoying how this has be done, but
     # in bash land it's tricky. We just 
@@ -81,7 +94,7 @@ OpenStack Servers
     hibera get openstack.ips >$f1
     hibera members openstack.api >$f2
     trap "rm -f $f1 $f2"
-
+    
     # Make sure we've got the correct IP
     # associate (do a linear mapping from 
     # the membership list).
@@ -92,12 +105,14 @@ OpenStack Servers
             disassociate.sh $IP
         fi
     done)
-
+    
     # Ensure the API server is running.
     service start nova-api
+```
 
 * stop-api.sh
 
+```
     #!/bin/bash
     # Disassociate all IPs in the pool.
     for IP in $(hibera get openstack.ips); do
@@ -105,12 +120,14 @@ OpenStack Servers
     done
     # No need to run the API service.
     service stop nova-api
+```
 
 Internal API
 ============
 
 Locks
 -----
+```
     client := NewHiberaClient(address)
 
     // Acquire a lock (fires an event).
@@ -133,9 +150,11 @@ Locks
     //
     // rev -- Use 0 for any revision.
     rev, err := client.Watch(key, rev)
+```
 
 Groups
 ------
+```
     client := NewHiberaClient(address)
 
     // Joining a group (fires an event).
@@ -170,9 +189,11 @@ Groups
     //
     // rev -- Use 0 for any rev.
     rev, err := client.Watch(key, rev)
+```
 
 Data
 ----
+```
     client := NewHiberaClient(address)
 
     // Reading a value.
@@ -207,9 +228,11 @@ Data
     // Delete all data.
     //   DELETE /data/
     err = client.Clear()
+```
 
 Events
 ------
+```
     client := NewHiberaClient(address)
 
     // Fire an event manually.
@@ -217,29 +240,60 @@ Events
     //
     // rev -- Use 0 for any rev.
     rev, err := client.Fire(key, rev)
+```
 
 HTTP API
 ========
 
 /locks/{key}
-* GET -- Get the current state of a lock. The revision is returned in the header `X-Revision`.
-* POST -- Acquire a lock. Use the query parameter `timeout` to specific some timeout. If the lock is not acquired, an HTTP error is returned.
-* DELETE -- Release a lock. If the lock is not currently held, an HTTP error is returned.
+------------
+
+* GET
+    Get the current state of a lock. The revision is returned in the header `X-Revision`.
+
+* POST
+    Acquire a lock. Use the query parameter `timeout` to specific some timeout. If the lock is not acquired, an HTTP error is returned.
+
+* DELETE
+    Release a lock. If the lock is not currently held, an HTTP error is returned.
 
 /groups/{group}
-* GET -- List group members. Use the query parameter `limit` to list only a limited number of members.
-* POST -- Join a group. Use the query parameter `name` to use a specific name (otherwise the client socket address is used).
-* DELETE -- Leave the given group. You may need to specify `name` if you've joined under a different name.
+---------------
+
+* GET
+    List group members. Use the query parameter `limit` to list only a limited number of members.
+
+* POST
+    Join a group. Use the query parameter `name` to use a specific name (otherwise the client socket address is used).
+
+* DELETE
+    Leave the given group. You may need to specify `name` if you've joined under a different name.
 
 /data/
-* GET -- List all data keys. This is massively expensive. Don't do it.
-* DELETE -- Delete all data in the system.
+------
+
+* GET
+    List all data keys. This is massively expensive. Don't do it.
+
+* DELETE
+    Delete all data in the system.
 
 /data/{key}
-* GET -- Get the current data. The revision is returned in the header `X-Revision`.
-* POST -- Update the given key. Takes a `rev` query parameter.
-* DELETE -- Remove all data in the given key. Takes a `rev` query parameter.
+-----------
+
+* GET
+    Get the current data. The revision is returned in the header `X-Revision`.
+
+* POST
+    Update the given key. Takes a `rev` query parameter.
+
+* DELETE
+    Remove all data in the given key. Takes a `rev` query parameter.
 
 /watches/{key}
-* GET -- Watch on the given key. Takes a `rev` query parameter.
-* POST -- Fires an event on the given key. You may specify a `rev` parameter to fire only if the `rev` matches.
+--------------
+* GET
+    Watch on the given key. Takes a `rev` query parameter.
+
+* POST
+    Fires an event on the given key. You may specify a `rev` parameter to fire only if the `rev` matches.
