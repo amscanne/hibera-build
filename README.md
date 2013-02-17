@@ -12,26 +12,7 @@ Similar projects are:
 Command line
 ============
 
-    # Locks.
-    hibera lock <key> [--name <name>] [--exec <run-script>]
-
-    # Groups.
-    hibera join <key> [--name <name>] [--exec <run-script>]
-
-    hibera run <key> [--count <number>]
-                     [--start <start-script>]
-                     [--stop <stop-script>]
-
-    hibera members <key> [--limit <number>]
-
-    # Data.
-    hibera get <key>
-    hibera set <key>
-    hibera sync <key> [--output <file>] [--exec <run-script>]
-
-    # Watches.
-    hibera watch <key>
-    hibera fire <key>
+Type `hibera` to see command line usage.
 
 Client API
 ==========
@@ -45,11 +26,11 @@ Locks
     //
     // timeout -- Use 0 for no timeout.
     // name -- Use the empty string for the default name.
-    err := client.Lock(key, timeout, name)
+    rev, err := client.Lock(key, timeout, name)
 
     // Releasing a lock (fires an event).
     //   DELETE /locks/{key}
-    err = client.Release(key)
+    rev, err = client.Unlock(key)
 
     // Check if a lock is locked (and by who).
     //   GET /locks/{key}
@@ -73,13 +54,13 @@ Groups
     //   POST /groups/{group}?name={name} 
     //
     // name -- Use the empty string to use the default name.
-    err := client.Join(group, name)
+    rev, err := client.Join(group, name)
 
     // Leaving a group (fires an event).
     //   DELETE /groups/{group}?name={name}
     //
     // name -- Use the empty string to use the default name.
-    err = client.Leave(group, name)
+    rev, err = client.Leave(group, name)
 
     // List the members of the group.
     // NOTE: Members returned have a strict ordering (the first member is
@@ -123,7 +104,15 @@ Data
     // Delete the data under a key.
     //   DELETE /watches/{key}?rev={rev}
     // rev -- Use 0 for any rev.
-    err = client.Clear(key, rev)
+    rev, err = client.Remove(key, rev)
+
+    // List all data.
+    //   GET /data/
+    items, err = client.List()
+
+    // Delete all data.
+    //   DELETE /data/
+    err = client.Clear()
 
 Events
 ------
@@ -133,7 +122,7 @@ Events
     //   POST /watches/{key}?rev={rev}
     //
     // rev -- Use 0 for any rev.
-    err := client.Fire(key, rev)
+    rev, err := client.Fire(key, rev)
 
 HTTP API
 ========
