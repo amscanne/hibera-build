@@ -41,6 +41,71 @@ MySQL Failover Example
     remove-mysql-master-ips.sh
     /etc/init.d/mysql stop
 
+OpenStack Servers
+-----------------
+
+* Initial setup
+
+    # Load the config which will stay synchronized.
+    cat /etc/nova/nova.conf | hibera set openstack.config
+
+    # Create the set of IPs that we will associate with API nodes.
+    echo 10.1.1.1 10.1.1.2 10.1.1.3 | hibera set openstack.ips
+
+* /etc/rc.local
+
+    # Ensure the configurations are synchronized.
+    hibera sync openstack.config --output /etc/nova/nova.conf --exec restart-nova.sh
+
+    # Always run three API servers.
+    hibera run openstack.api -count 3 -start start-api.sh -stop stop-api.sh
+
+* restart-nova.sh
+
+    #!/bin/bash
+    # The configuration file has changed.
+    restart nova-compute
+    restart nova-api
+    restart nova-network
+    restart nova-scheduler
+
+* start-api.sh
+
+    #!/bin/bash
+    # Annoying how this has be done, but
+    # in bash land it's tricky. We just 
+    # generate two files and do a zip with
+    # paste.
+    f1=$(mktemp)
+    f2=$(mktemp)
+    hibera get openstack.ips >$f1
+    hibera members openstack.api >$f2
+    trap "rm -f $f1 $f2"
+
+    # Make sure we've got the correct IP
+    # associate (do a linear mapping from 
+    # the membership list).
+    paste $f1 $f2 | (while read IP API; do 
+        if [ "x${API:0:1}" = "x*" ]; then
+            associate.sh $IP
+        else
+            disassociate.sh $IP
+        fi
+    done)
+
+    # Ensure the API server is running.
+    service start nova-api
+
+* stop-api.sh
+
+    #!/bin/bash
+    # Disassociate all IPs in the pool.
+    for IP in $(hibera get openstack.ips); do
+        disassociate.sh $IP
+    done
+    # No need to run the API service.
+    service stop nova-api
+
 Internal API
 ============
 
