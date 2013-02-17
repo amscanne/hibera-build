@@ -143,7 +143,7 @@ Locks
 
     // Check if a lock is locked (and by who).
     //   GET /locks/{key}
-    owner, rev, err := client.Owner(key)
+    owners, rev, err := client.Owners(key)
 
     // Wait for a lock to be acquired / released.
     //   GET /watches/{key}?rev={rev}
@@ -260,7 +260,7 @@ HTTP API
 
 * POST
 
-    Acquire a lock. Use the query parameter `timeout` to specific some timeout. If the lock is not acquired, an HTTP error is returned.
+    Acquire a lock. Use the query parameter `timeout` to specific some timeout. If the lock is not acquired, an HTTP error is returned. You may also use `limit` to support acquiring a lock multiple times.
 
 * DELETE
 
