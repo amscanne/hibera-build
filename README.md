@@ -143,7 +143,7 @@ Locks
 
     // Check if a lock is locked (and by who).
     //   GET /locks/{key}
-    owner, rev, err := client.State(key)
+    owner, rev, err := client.Owner(key)
 
     // Wait for a lock to be acquired / released.
     //   GET /watches/{key}?rev={rev}
