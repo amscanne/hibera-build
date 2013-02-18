@@ -28,7 +28,7 @@ MySQL Failover Example
 ```
     #!/bin/bash
     MASTER=$(hibera members mysql -limit 1)
-    if [ "x${MASTER:0:1}" = "x*" ]; then
+    if [ "$MASTER" = "*" ]; then
         # Looks like we're the master.
         associate-mysql-master-ips.sh
         start-mysql-master.sh
@@ -99,7 +99,7 @@ OpenStack Servers
     # associate (do a linear mapping from 
     # the membership list).
     paste $f1 $f2 | (while read IP API; do 
-        if [ "x${API:0:1}" = "x*" ]; then
+        if [ "$API" = "*" ]; then
             associate.sh $IP
         else
             disassociate.sh $IP
@@ -142,14 +142,14 @@ Locks
     rev, err = client.Unlock(key)
 
     // Check if a lock is locked (and by who).
-    //   GET /locks/{key}
-    owners, rev, err := client.Owners(key)
+    //   GET /locks/{key}?name={name}
+    owners, rev, err := client.Owners(key, name)
 
     // Wait for a lock to be acquired / released.
-    //   GET /watches/{key}?rev={rev}
+    //   GET /watches/{key}?rev={rev}&timeout={timeout}
     //
     // rev -- Use 0 for any revision.
-    rev, err := client.Watch(key, rev)
+    rev, err := client.Watch(key, rev, timeout)
 ```
 
 Groups
@@ -185,10 +185,10 @@ Groups
     members, rev, err := client.Members(group, name, limit)
 
     // Wait for group members to change.
-    //   GET /watches/{key}?rev={rev}
+    //   GET /watches/{key}?rev={rev}&timeout={timeout}
     //
     // rev -- Use 0 for any rev.
-    rev, err := client.Watch(key, rev)
+    rev, err := client.Watch(key, rev, timeout)
 ```
 
 Data
@@ -212,9 +212,9 @@ Data
     } 
 
     // Wait until the key is not at given rev.
-    //   GET /watches/{key}?rev={rev}
+    //   GET /watches/{key}?rev={rev}&timeout={timeout}
     e/ rev -- Use 0 for any rev.
-    rev, err := client.Watch(key, rev)
+    rev, err := client.Watch(key, rev, timeout)
 
     // Delete the data under a key.
     //   DELETE /watches/{key}?rev={rev}
@@ -256,7 +256,7 @@ HTTP API
 
 * GET
 
-    Get the current state of a lock. The revision is returned in the header `X-Revision`.
+    Get the current state of a lock. The revision is returned in the header `X-Revision`. You may also specify a query parameter `name` to change the name of the client (if the client is an owner, one element will have an asterisk).
 
 * POST
 
@@ -271,7 +271,7 @@ HTTP API
 
 * GET
 
-    List group members. Use the query parameter `limit` to list only a limited number of members.
+    List group members. Use the query parameter `limit` to list only a limited number of members. You may use also use the `name` parameter to change the name of the client in the same way as with locks.
 
 * POST
 
@@ -312,7 +312,7 @@ HTTP API
 
 * GET
 
-    Watch on the given key. Takes a `rev` query parameter.
+    Watch on the given key. Takes a `rev` query parameter. Also takes an optional `timeout` parameter.
 
 * POST
 
