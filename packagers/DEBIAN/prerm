@@ -1,0 +1,5 @@
+#!/bin/bash
+
+if [ ! "$1" = "upgrade" ]; then
+    /etc/init.d/hibera stop
+fi

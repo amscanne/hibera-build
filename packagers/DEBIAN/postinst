@@ -1,0 +1,7 @@
+#!/bin/bash
+
+update-rc.d hibera defaults
+
+if /etc/init.d/hibera status | grep running; then
+    /etc/init.d/hibera restart
+fi

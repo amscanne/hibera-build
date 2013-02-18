@@ -1,4 +1,9 @@
-bin/*
-pkg/*
+bin/
+pkg/
+dist/
+debbuild/
+rpmbuild/
 src/code.google.com/
 *.pb.go
+*.deb
+*.rpm
