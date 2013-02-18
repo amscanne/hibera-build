@@ -213,7 +213,7 @@ Data
 
     // Wait until the key is not at given rev.
     //   GET /watches/{key}?rev={rev}
-    // rev -- Use 0 for any rev.
+    e/ rev -- Use 0 for any rev.
     rev, err := client.Watch(key, rev)
 
     // Delete the data under a key.
