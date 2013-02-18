@@ -281,7 +281,7 @@ HTTP API
 
     Leave the given group. You may need to specify `name` if you've joined under a different name.
 
-/data/
+/data
 ------
 
 * GET
