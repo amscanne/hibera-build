@@ -138,8 +138,8 @@ Locks
     rev, err := client.Lock(key, timeout, name)
 
     // Releasing a lock (fires an event).
-    //   DELETE /locks/{key}
-    rev, err = client.Unlock(key)
+    //   DELETE /locks/{key}?name={name}
+    rev, err = client.Unlock(key, name)
 
     // Check if a lock is locked (and by who).
     //   GET /locks/{key}?name={name}
