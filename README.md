@@ -128,7 +128,7 @@ Internal API
 Locks
 -----
 ```
-    client := NewHiberaClient(address)
+    client := NewHiberaClient(address, "")
 
     // Acquire a lock (fires an event).
     //   POST /locks/{key}?timeout={timeout}?name={name}
@@ -155,7 +155,7 @@ Locks
 Groups
 ------
 ```
-    client := NewHiberaClient(address)
+    client := NewHiberaClient(address, "")
 
     // Joining a group (fires an event).
     // NOTE: By default, the member name used will be the address of the
@@ -194,7 +194,7 @@ Groups
 Data
 ----
 ```
-    client := NewHiberaClient(address)
+    client := NewHiberaClient(address, "")
 
     // Reading a value.
     //   GET /data/{key}
@@ -233,7 +233,7 @@ Data
 Events
 ------
 ```
-    client := NewHiberaClient(address)
+    client := NewHiberaClient(address, "")
 
     // Fire an event manually.
     //   POST /watches/{key}?rev={rev}
