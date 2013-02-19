@@ -128,47 +128,47 @@ Internal API
 Locks
 -----
 ```
-    client := NewHiberaClient(address, "")
+    client := NewHiberaClient(addrs, 0)
 
     // Acquire a lock (fires an event).
-    //   POST /locks/{key}?timeout={timeout}?name={name}
+    //   POST /sync/{key}?timeout={timeout}?name={name}&limit={limit}
     //
-    // timeout -- Use 0 for no timeout.
     // name -- Use the empty string for the default name.
-    rev, err := client.Lock(key, timeout, name)
+    // limit -- For a lock, this is the number of holders (1 is a mutex).
+    // timeout -- Use 0 for no timeout.
+    index, rev, err := client.Join(key,  name, limit, timeout)
 
     // Releasing a lock (fires an event).
     //   DELETE /locks/{key}?name={name}
-    rev, err = client.Unlock(key, name)
-
-    // Check if a lock is locked (and by who).
-    //   GET /locks/{key}?name={name}
-    owners, rev, err := client.Owners(key, name)
+    rev, err = client.Leave(key, name)
 
     // Wait for a lock to be acquired / released.
-    //   GET /watches/{key}?rev={rev}&timeout={timeout}
+    //   GET /event/{key}?rev={rev}&timeout={timeout}
     //
     // rev -- Use 0 for any revision.
-    rev, err := client.Watch(key, rev, timeout)
+    // timeout -- Only wait for a fixed time.
+    rev, err := client.Wait(key, rev, timeout)
 ```
 
 Groups
 ------
 ```
-    client := NewHiberaClient(address, "")
+    client := NewHiberaClient(addrs, 0)
 
     // Joining a group (fires an event).
     // NOTE: By default, the member name used will be the address of the
     // client socket received on the server end. This can be overriden by
     // providing a name in the join call below. You can actually join multiple
     // times by providing different names.
-    //   POST /groups/{group}?name={name} 
+    //   POST /sync/{key}?name={name}&limit={limit}&timeout={timeout}
     //
     // name -- Use the empty string to use the default name.
-    rev, err := client.Join(group, name)
+    // limit -- For a pure group, you should use 0.
+    // timeout -- Not used if limit is 0.
+    index, rev, err := client.Join(group, name, 0, 0)
 
     // Leaving a group (fires an event).
-    //   DELETE /groups/{group}?name={name}
+    //   DELETE /sync/{key}?name={name}
     //
     // name -- Use the empty string to use the default name.
     rev, err = client.Leave(group, name)
@@ -177,24 +177,26 @@ Groups
     // NOTE: Members returned have a strict ordering (the first member is
     // the leader). You can easily implement a service that needs N leaders
     // by selecting the first N members of the group, which will be stable.
-    // Also, if there are members matching {name} -- they will be returned
+    // Also, you own index for {name} will be returned via the index.
     // with a prefix of '*'.
-    //   GET /groups/{group}/?name={name}&limit={name}
+    //   GET /sync/{key}/?name={name}&limit={name}
     //
+    // name -- The name to use for the index.
     // limit -- Use 0 to specify no limit.
-    members, rev, err := client.Members(group, name, limit)
+    index, members, rev, err := client.Members(group, name, limit)
 
     // Wait for group members to change.
-    //   GET /watches/{key}?rev={rev}&timeout={timeout}
+    //   GET /event/{key}?rev={rev}&timeout={timeout}
     //
     // rev -- Use 0 for any rev.
-    rev, err := client.Watch(key, rev, timeout)
+    // timeout -- Only wait for a fixed time.
+    rev, err := client.Wait(key, rev, timeout)
 ```
 
 Data
 ----
 ```
-    client := NewHiberaClient(address, "")
+    client := NewHiberaClient(addrs, 0)
 
     // Reading a value.
     //   GET /data/{key}
@@ -204,6 +206,7 @@ Data
     for {
         // Will fail if the rev is not the same.
         //   POST /data/{key}?rev={rev}
+        //
         // rev -- Use 0 for any rev.
         rev, err := client.Set(key, newvalue, rev+1)
         if err is nil {
@@ -212,12 +215,13 @@ Data
     } 
 
     // Wait until the key is not at given rev.
-    //   GET /watches/{key}?rev={rev}&timeout={timeout}
+    //   GET /event/{key}?rev={rev}&timeout={timeout}
     e/ rev -- Use 0 for any rev.
-    rev, err := client.Watch(key, rev, timeout)
+    rev, err := client.Wait(key, rev, timeout)
 
     // Delete the data under a key.
-    //   DELETE /watches/{key}?rev={rev}
+    //   DELETE /data/{key}?rev={rev}
+    //
     // rev -- Use 0 for any rev.
     rev, err = client.Remove(key, rev)
 
@@ -233,10 +237,10 @@ Data
 Events
 ------
 ```
-    client := NewHiberaClient(address, "")
+    client := NewHiberaClient(addrs, 0)
 
     // Fire an event manually.
-    //   POST /watches/{key}?rev={rev}
+    //   POST /event/{key}?rev={rev}
     //
     // rev -- Use 0 for any rev.
     rev, err := client.Fire(key, rev)
@@ -245,75 +249,109 @@ Events
 HTTP API
 ========
 
+The service API is entirely HTTP-based.
+
+Data distribution is done by 301 redirects where necessary, so clients
+*must* support this operation.
+
+Headers
+-------
+Revisions are always returned in the header `X-Revision`.  This is true for
+revisions of sync objects, data objects and the full cluster revision.
+
+Clients may specify an `X-Client-Id` header with a generated string. This will
+allow them to connection multiple names and associate ephemeral nodes.  For
+example, support a client connects to a server with two TCP sockets, A and B.
+
+    Client                                              Server
+           ---A---> SyncJoin w/ X-Client-Id ---A--->     Ok
+           ---B--->   Wait w/ X-Client-Id   ---B--->     Ok
+           ---A---X Connection dies.
+                    Client is still in joined group.
+
 /
 ---
 
 * GET
-    Fetches basic cluster info. Takes a `base` query parameter for deltas.
+    Fetches cluster info.
 
-/locks/{key}
-------------
-
-* GET
-
-    Get the current state of a lock. The revision is returned in the header `X-Revision`. You may also specify a query parameter `name` to change the name of the client (if the client is an owner, one element will have an asterisk).
-
-* POST
-
-    Acquire a lock. Use the query parameter `timeout` to specific some timeout. If the lock is not acquired, an HTTP error is returned. You may also use `limit` to support acquiring a lock multiple times.
-
-* DELETE
-
-    Release a lock. If the lock is not currently held, an HTTP error is returned.
-
-/groups/{group}
+/sync/{key}
 ---------------
 
 * GET
 
-    List group members. Use the query parameter `limit` to list only a limited number of members. You may use also use the `name` parameter to change the name of the client in the same way as with locks.
+    List syncronization group members.
+    
+    `limit` -- List only up to N members.
+    
+    `name` -- Use this name for computing the index.
 
 * POST
 
-    Join a group. Use the query parameter `name` to use a specific name (otherwise the client socket address is used).
+    Join a synchronization group.
+    
+    `name` -- Use to specify a name to join under.
+              One client may join multiple times.
+
+    `limit` -- Block on joining until < limit members are in.
+
+    `timeout` -- If `limit` is specified, timeout after 
+                 a fixed number of milliesconds.
 
 * DELETE
 
-    Leave the given group. You may need to specify `name` if you've joined under a different name.
+    Leave the given group.
+    
+    `name` -- The name to leave the group.
 
 /data
 ------
 
 * GET
 
-    List all data keys. This is massively expensive. Don't do it.
+    List all data keys.
+    This is an expensive operation, don't do it.
 
 * DELETE
 
     Delete all data in the system.
+    This is also an expensive operation, don't do it.
 
 /data/{key}
 -----------
 
 * GET
 
-    Get the current data. The revision is returned in the header `X-Revision`.
+    Get the current data.
 
 * POST
 
-    Update the given key. Takes a `rev` query parameter.
+    Update the given key.
+
+    `rev` -- Update only if the current rev is `rev`.
+             Use 0 to update always.
 
 * DELETE
 
-    Remove all data in the given key. Takes a `rev` query parameter.
+    Delete the given key.
 
-/watches/{key}
---------------
+    `rev` -- Delete only if the current rev is `rev`.
+             Use 0 to delete always.
+
+/event/{key}
+------------
 
 * GET
 
-    Watch on the given key. Takes a `rev` query parameter. Also takes an optional `timeout` parameter.
+    Wait on the given key.
+    
+    `rev` -- Return the rev is not `rev`.
+             Use 0 to return on the first change.
+
+    `timeout` -- Return after `timeout` milliseconds.
 
 * POST
 
-    Fires an event on the given key. You may specify a `rev` parameter to fire only if the `rev` matches.
+    Fires an event on the given key.
+    
+    `rev` -- Fire only if the revision is currently `rev`.
