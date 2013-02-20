@@ -56,7 +56,7 @@ clean:
 %.pb.go: protoc %.proto
 	@PATH=$(CURDIR)/bin/:$(PATH) protoc --go_out=$(CURDIR) $*.proto
 
-build-%: $(PROTOCOLSGO)
+build-%:
 	@GOPATH=$(CURDIR) go build hibera/$*
 install-%:
 	@GOPATH=$(CURDIR) go install hibera/$*
@@ -67,7 +67,7 @@ test-%:
 fmt-%:
 	@GOPATH=$(CURDIR) go fmt hibera/$*
 
-go-%:
+go-%: $(PROTOCOLSGO)
 	@$(MAKE) $(foreach pkg,$(PACKAGES),$*-$(pkg))
 
 dist: go-test go-install
