@@ -64,6 +64,8 @@ doc-%:
 	@GOPATH=$(CURDIR) go doc hibera/$*
 test-%:
 	@GOPATH=$(CURDIR) go test hibera/$*
+bench-%:
+	@GOPATH=$(CURDIR) go test -bench=".*" hibera/$*
 fmt-%:
 	@GOPATH=$(CURDIR) go fmt hibera/$*
 
