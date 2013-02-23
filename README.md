@@ -14,40 +14,7 @@ Command line
 
 Type `hibera` to see command line usage.
 
-MySQL Failover Example
-----------------------
-
-* Start-up script
-
-```
-    hibera run mysql -count 3 -start start-mysql-slave.sh -stop stop-mysql-slave.sh
-```
-
-* start-mysql.sh
-
-```
-    #!/bin/bash
-    MASTER=$(hibera members mysql -limit 1)
-    if [ "$MASTER" = "*" ]; then
-        # Looks like we're the master.
-        associate-mysql-master-ips.sh
-        start-mysql-master.sh
-    else
-        # Looks like we're a slave (2-3).
-        remove-mysql-master-ips.sh
-        start-mysql-slave.sh $MASTER
-    fi
-```
-
-* stop-mysql.sh
-
-```
-    #!/bin/bash 
-    remove-mysql-master-ips.sh
-    /etc/init.d/mysql stop
-```
-
-OpenStack Servers
+OpenStack Example
 -----------------
 
 * Initial setup
@@ -58,16 +25,19 @@ OpenStack Servers
     
     # Create the set of IPs that we will associate with API nodes.
     echo 10.1.1.1 10.1.1.2 10.1.1.3 | hibera set openstack.ips
+    echo 10.1.1.1 | hibera set openstack.ips.0
+    echo 10.1.1.2 | hibera set openstack.ips.1
+    echo 10.1.1.3 | hibera set openstack.ips.2
 ```
 
 * /etc/rc.local
 
 ```
     # Ensure the configurations are synchronized.
-    hibera sync openstack.config --output /etc/nova/nova.conf --exec restart-nova.sh
+    hibera sync openstack.config -output /etc/nova/nova.conf restart-nova.sh
     
     # Always run three API servers.
-    hibera run openstack.api -count 3 -start start-api.sh -stop stop-api.sh
+    hibera run openstack.api -limit 3 -start start-api.sh -stop stop-api.sh
 ```
 
 * restart-nova.sh
@@ -85,29 +55,16 @@ OpenStack Servers
 
 ```
     #!/bin/bash
-    # Annoying how this has be done, but
-    # in bash land it's tricky. We just 
-    # generate two files and do a zip with
-    # paste.
-    f1=$(mktemp)
-    f2=$(mktemp)
-    hibera get openstack.ips >$f1
-    hibera members openstack.api >$f2
-    trap "rm -f $f1 $f2"
-    
-    # Make sure we've got the correct IP
-    # associate (do a linear mapping from 
-    # the membership list).
-    paste $f1 $f2 | (while read IP API; do 
-        if [ "$API" = "*" ]; then
-            associate.sh $IP
+    ips=$(hibera get openstack.ips)
+    myip=$(hibera in openstack.ips)
+    # Associate our IP from the pool.
+    for ip in $ips; do
+        if [ "$ip" == "$myip" ]; then
+            associate.sh $ip
         else
-            disassociate.sh $IP
+            disassociate.sh $ip
         fi
-    done)
-    
-    # Ensure the API server is running.
-    service start nova-api
+    done
 ```
 
 * stop-api.sh
@@ -115,11 +72,9 @@ OpenStack Servers
 ```
     #!/bin/bash
     # Disassociate all IPs in the pool.
-    for IP in $(hibera get openstack.ips); do
+    for ip in $(hibera get openstack.ips); do
         disassociate.sh $IP
     done
-    # No need to run the API service.
-    service stop nova-api
 ```
 
 Internal API
