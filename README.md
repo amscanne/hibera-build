@@ -163,7 +163,7 @@ Data
         //   POST /data/{key}?rev={rev}
         //
         // rev -- Use 0 for any rev.
-        rev, err := client.Set(key, newvalue, rev+1)
+        rev, err = client.Set(key, rev+1, newvalue)
         if err is nil {
             break;
         }
@@ -172,7 +172,7 @@ Data
     // Wait until the key is not at given rev.
     //   GET /event/{key}?rev={rev}&timeout={timeout}
     e/ rev -- Use 0 for any rev.
-    rev, err := client.Wait(key, rev, timeout)
+    rev, err = client.Wait(key, rev, timeout)
 
     // Delete the data under a key.
     //   DELETE /data/{key}?rev={rev}
