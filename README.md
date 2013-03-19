@@ -91,7 +91,7 @@ Locks
     // name -- Use the empty string for the default name.
     // limit -- For a lock, this is the number of holders (1 is a mutex).
     // timeout -- Use 0 for no timeout.
-    index, rev, err := client.Join(key,  name, limit, timeout)
+    index, rev, err := client.Join(key, name, limit, timeout)
 
     // Releasing a lock (fires an event).
     //   DELETE /locks/{key}?name={name}
