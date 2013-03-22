@@ -279,6 +279,11 @@ example, support a client connects to a server with two TCP sockets, A and B.
 
     Get the current data.
 
+    `rev` -- Return when the rev is not `rev`.
+             Use 0 to return on the first change.
+
+    `timeout` -- Return after `timeout` milliseconds.
+
 * POST
 
     Update the given key.
@@ -296,17 +301,17 @@ example, support a client connects to a server with two TCP sockets, A and B.
 /event/{key}
 ------------
 
-* GET
-
-    Wait on the given key.
-    
-    `rev` -- Return the rev is not `rev`.
-             Use 0 to return on the first change.
-
-    `timeout` -- Return after `timeout` milliseconds.
-
 * POST
 
     Fires an event on the given key.
     
     `rev` -- Fire only if the revision is currently `rev`.
+
+* GET
+
+    Wait for synchronization events on the given key.
+    
+    `rev` -- Return when the rev is not `rev`.
+             Use 0 to return on the first change.
+
+    `timeout` -- Return after `timeout` milliseconds.
