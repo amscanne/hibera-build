@@ -315,3 +315,41 @@ example, support a client connects to a server with two TCP sockets, A and B.
              Use 0 to return on the first change.
 
     `timeout` -- Return after `timeout` milliseconds.
+
+/auth
+-------
+
+* GET
+
+    List all authorization tokens.
+
+* DELETE
+
+    Delete all authorization tokens in the system.
+
+/data/{key}
+-----------
+
+* GET
+
+    Get the auth token (JSON).
+
+* POST
+
+    Create or update the given auth token (JSON).
+
+* DELETE
+
+    Delete the given auth token.
+
+/event/{key}
+------------
+
+* POST
+
+    Fires an event on the given key.
+    
+    `rev` -- Fire only if the revision is currently `rev`.
+
+* GET
+
