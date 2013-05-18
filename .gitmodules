@@ -1,0 +1,3 @@
+[submodule "src/hibera"]
+	path = src/hibera
+	url = git@github.com:amscanne/gohibera.git
