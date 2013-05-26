@@ -316,17 +316,6 @@ example, support a client connects to a server with two TCP sockets, A and B.
 
     `timeout` -- Return after `timeout` milliseconds.
 
-/auth
--------
-
-* GET
-
-    List all authorization tokens.
-
-* DELETE
-
-    Delete all authorization tokens in the system.
-
 /data/{key}
 -----------
 
@@ -353,3 +342,37 @@ example, support a client connects to a server with two TCP sockets, A and B.
 
 * GET
 
+    Wait until the key is not at revision `rev`.
+
+    `rev` -- Fire only when the revision is not `rev`.
+
+/access
+-------
+
+* GET
+
+    List all access tokens.
+
+* DELETE
+
+    Delete all access tokens in the system.
+
+/access/{key}
+-----------
+
+* GET
+
+    Get the given access token.
+
+* POST
+
+    Grant access to a given path for the token.
+
+    `path` -- The path to modify.
+    `read` -- True / false for read permission.
+    `write` -- True / false for write permission.
+    `execute` -- True / false for synchronization permission.
+
+* DELETE
+
+    Delete the given access token.
