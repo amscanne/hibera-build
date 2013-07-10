@@ -68,7 +68,7 @@ test-%:
 bench-%:
 	@GOPATH=$(CURDIR) go test -bench=".*" hibera/$*
 fmt-%:
-	@gofmt -l=true -w=true -tabindent=false -tabwidth=4 src/hibera/$*
+	@gofmt -l=true -w=true -tabs=false -tabwidth=4 src/hibera/$*
 
 go-%: $(PROTOCOLSGO)
 	@$(MAKE) $(foreach pkg,$(PACKAGES),$*-$(pkg))
