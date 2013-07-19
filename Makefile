@@ -70,7 +70,13 @@ bench-%:
 fmt-%:
 	@gofmt -l=true -w=true -tabs=false -tabwidth=4 src/hibera/$*
 
+submodules:
+.PHONY: submodules
+
 go-%: $(PROTOCOLSGO)
+ifeq ($(PACKAGES),)
+	@git submodules init && git submodules update
+endif
 	@$(MAKE) $(foreach pkg,$(PACKAGES),$*-$(pkg))
 
 dist: go-test go-install
