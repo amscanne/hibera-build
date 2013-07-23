@@ -49,7 +49,7 @@ protoc:
 .PHONY: protoc
 
 clean:
-	@rm -rf bin/ pkg/ dist/
+	@rm -rf bin/ pkg/ dist/ doc/
 	@rm -rf debbuild/ rpmbuild/ *.deb *.rpm
 .PHONY: clean
 
@@ -62,7 +62,11 @@ build-%:
 install-%:
 	@GOPATH=$(CURDIR) go install hibera/$*
 doc-%:
-	@GOPATH=$(CURDIR) go doc hibera/$*
+	@mkdir -p doc/pkg/hibera/$*
+	@GOPATH=$(CURDIR) godoc -html=true hibera/$* > doc/pkg/hibera/$*/index.html
+doc-root:
+	@mkdir -p doc/pkg/hibera
+	@GOPATH=$(CURDIR) godoc -html=true hibera > doc/pkg/hibera/index.html
 test-%:
 	@GOPATH=$(CURDIR) go test hibera/$*
 bench-%:
@@ -72,6 +76,7 @@ fmt-%:
 
 go-%: $(PROTOCOLSGO)
 	@$(MAKE) $(foreach pkg,$(PACKAGES),$*-$(pkg))
+go-doc: doc-root
 
 dist: go-test go-install
 	@mkdir -p dist/usr/bin
