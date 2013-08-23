@@ -162,9 +162,9 @@ Headers
 Revisions are always returned in the header `X-Revision`.  This is true for
 revisions of sync objects, data objects and the full cluster revision.
 
-Clients should specify an `X-Client-Id` header with a generated string. This will
-allow them to connection multiple names and associate ephemeral nodes.  For
-example, support a client connects to a server with two TCP sockets, A and B.
+Clients should specify an `X-Client-Id` header with a unique string. This will
+allow them to connect using multiple names and associate ephemeral nodes.  For
+example, supporose a client connects to a server with two TCP sockets, A and B.
 
     Client                                              Server
            ---A---> SyncJoin w/ X-Client-Id ---A--->     Ok
