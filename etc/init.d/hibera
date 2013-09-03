@@ -16,7 +16,6 @@ EXEC=/usr/bin/hiberad
 [ -f /etc/hibera.conf ] && . /etc/hibera.conf
 
 ARGS=""
-[ ! "x$HIBERA_N" = "x" ] && ARGS="$ARGS -N=$HIBERA_N"
 [ ! "x$HIBERA_ROOT" = "x" ] && ARGS="$ARGS -auth=$HIBERA_ROOT"
 [ ! "x$HIBERA_BIND" = "x" ] && ARGS="$ARGS -bind=$HIBERA_BIND"
 [ ! "x$HIBERA_PORT" = "x" ] && ARGS="$ARGS -port=$HIBERA_PORT"
@@ -25,6 +24,8 @@ ARGS=""
 [ ! "x$HIBERA_DATA" = "x" ] && ARGS="$ARGS -data=$HIBERA_DATA"
 [ ! "x$HIBERA_LOG" = "x" ] && ARGS="$ARGS -log=$HIBERA_LOG"
 [ ! "x$HIBERA_SEEDS" = "x" ] && ARGS="$ARGS -seeds=$HIBERA_SEEDS"
+[ ! "x$HIBERA_ACTIVE" = "x" ] && ARGS="$ARGS -active=$HIBERA_ACTIVE"
+[ ! "x$HIBERA_PROFILE" = "x" ] && ARGS="$ARGS -profile=$HIBERA_PROFILE"
 
 function running() {
     pidof $EXEC >/dev/null 2>&1

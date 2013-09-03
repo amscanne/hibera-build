@@ -20,8 +20,6 @@ $(error Unknown arch "$(ARCH)".)
 endif
 
 PACKAGES := $(shell cd src/hibera && ls)
-PROTOCOLS := $(shell find src/hibera -name \*.proto)
-PROTOCOLSGO := $(patsubst %.proto,%.pb.go,$(PROTOCOLS))
 
 all: dist
 .PHONY: all
@@ -37,25 +35,10 @@ fmt: go-fmt
 packages: deb rpm
 .PHONY: packages
 
-protoc:
-	@GOPATH=$(CURDIR) go get \
-	    code.google.com/p/goprotobuf/proto
-	@GOPATH=$(CURDIR) go get \
-	    code.google.com/p/goprotobuf/protoc-gen-go
-	@GOPATH=$(CURDIR) go install \
-	    code.google.com/p/goprotobuf/proto
-	@GOPATH=$(CURDIR) go install \
-	    code.google.com/p/goprotobuf/protoc-gen-go
-.PHONY: protoc
-
 clean:
 	@rm -rf bin/ pkg/ dist/ doc/
 	@rm -rf debbuild/ rpmbuild/ *.deb *.rpm
 .PHONY: clean
-
-%.pb.go: protoc %.proto
-	@PATH=$(CURDIR)/bin/:$(PATH) protoc --go_out=$(CURDIR) $*.proto
-	@rm -f bin/protoc-gen-go
 
 build-%:
 	@GOPATH=$(CURDIR) go build hibera/$*
@@ -77,7 +60,7 @@ fmt-%:
 submodules:
 .PHONY: submodules
 
-go-%: $(PROTOCOLSGO)
+go-%:
 ifeq ($(PACKAGES),)
 	@git submodules init && git submodules update
 endif
