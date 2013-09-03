@@ -22,7 +22,8 @@ ARGS=""
 [ ! "x$HIBERA_PORT" = "x" ] && ARGS="$ARGS -port=$HIBERA_PORT"
 [ ! "x$HIBERA_DOMAIN" = "x" ] && ARGS="$ARGS -domain=$HIBERA_DOMAIN"
 [ ! "x$HIBERA_KEYS" = "x" ] && ARGS="$ARGS -keys=$HIBERA_KEYS"
-[ ! "x$HIBERA_PATH" = "x" ] && ARGS="$ARGS -path=$HIBERA_PATH"
+[ ! "x$HIBERA_DATA" = "x" ] && ARGS="$ARGS -data=$HIBERA_DATA"
+[ ! "x$HIBERA_LOG" = "x" ] && ARGS="$ARGS -log=$HIBERA_LOG"
 [ ! "x$HIBERA_SEEDS" = "x" ] && ARGS="$ARGS -seeds=$HIBERA_SEEDS"
 
 function running() {
@@ -35,7 +36,7 @@ function start() {
         echo "running"
         return 1
     else
-        (cd / && $EXEC $ARGS | logger -t hibera) &
+        (cd / && $EXEC run $ARGS | logger -t hibera) &
         echo "started"
         return 0
     fi
