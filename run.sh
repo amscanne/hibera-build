@@ -57,5 +57,8 @@ else
     startone
 fi
 
+# Activate the cluster.
+bin/hiberactl -api localhost:$FIRSTPORT activate
+
 # Wait for all children.
 waitall
