@@ -16,7 +16,7 @@ EXEC=/usr/bin/hiberad
 [ -f /etc/hibera.conf ] && . /etc/hibera.conf
 
 ARGS=""
-[ ! "x$HIBERA_ROOT" = "x" ] && ARGS="$ARGS -auth=$HIBERA_ROOT"
+[ ! "x$HIBERA_ROOT" = "x" ] && ARGS="$ARGS -root=$HIBERA_ROOT"
 [ ! "x$HIBERA_BIND" = "x" ] && ARGS="$ARGS -bind=$HIBERA_BIND"
 [ ! "x$HIBERA_PORT" = "x" ] && ARGS="$ARGS -port=$HIBERA_PORT"
 [ ! "x$HIBERA_DOMAIN" = "x" ] && ARGS="$ARGS -domain=$HIBERA_DOMAIN"
