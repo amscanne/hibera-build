@@ -1,0 +1,59 @@
+diff -r -u4 go-orig/src/pkg/crypto/tls/conn.go go/src/pkg/crypto/tls/conn.go
+--- go-orig/src/pkg/crypto/tls/conn.go	2013-09-05 21:30:31.009408958 -0400
++++ go/src/pkg/crypto/tls/conn.go	2013-09-05 21:42:34.396314754 -0400
+@@ -13,8 +13,9 @@
+ 	"crypto/x509"
+ 	"errors"
+ 	"io"
+ 	"net"
++	"os"
+ 	"sync"
+ 	"time"
+ )
+ 
+@@ -886,4 +887,8 @@
+ 		return errors.New("TLS handshake has not yet been performed")
+ 	}
+ 	return c.peerCertificates[0].VerifyHostname(host)
+ }
++
++func (c *Conn) File() (*os.File, error) {
++	return nil, errors.New("TLS socket cannot be treated as a raw file")
++}
+diff -r -u4 go-orig/src/pkg/net/net.go go/src/pkg/net/net.go
+--- go-orig/src/pkg/net/net.go	2013-09-05 21:30:31.209406445 -0400
++++ go/src/pkg/net/net.go	2013-09-05 21:31:56.596332986 -0400
+@@ -80,8 +80,11 @@
+ 
+ 	// RemoteAddr returns the remote network address.
+ 	RemoteAddr() Addr
+ 
++        // Returns copy of the backing file.
++        File() (*os.File, error)
++
+ 	// SetDeadline sets the read and write deadlines associated
+ 	// with the connection. It is equivalent to calling both
+ 	// SetReadDeadline and SetWriteDeadline.
+ 	//
+diff -r -u4 go-orig/src/pkg/net/pipe.go go/src/pkg/net/pipe.go
+--- go-orig/src/pkg/net/pipe.go	2013-06-12 23:03:55.000000000 -0400
++++ go/src/pkg/net/pipe.go	2013-09-05 21:39:39.402514722 -0400
+@@ -6,8 +6,9 @@
+ 
+ import (
+ 	"errors"
+ 	"io"
++	"os"
+ 	"time"
+ )
+ 
+ // Pipe creates a synchronous, in-memory, full duplex
+@@ -64,4 +65,8 @@
+ 
+ func (p *pipe) SetWriteDeadline(t time.Time) error {
+ 	return errors.New("net.Pipe does not support deadlines")
+ }
++
++func (p *pipe) File() (*os.File, error) {
++	return nil, errors.New("net.Pipe cannot be treated as a single file")
++}
