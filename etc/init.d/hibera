@@ -51,6 +51,10 @@ function stop() {
         return 1
     fi
 }
+function restart() {
+    kill -HUP $(pidof $EXEC) >/dev/null 2>&1
+    return $?
+}
 function status() {
     if running; then
         echo "running"
@@ -71,8 +75,7 @@ case "$1" in
     exit $?
     ;;
   restart|force-reload)
-    stop
-    start
+    restart
     exit $?
     ;;
   status)
