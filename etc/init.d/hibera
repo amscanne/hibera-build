@@ -24,7 +24,6 @@ ARGS=""
 [ ! "x$HIBERA_DATA" = "x" ] && ARGS="$ARGS -data=$HIBERA_DATA"
 [ ! "x$HIBERA_LOG" = "x" ] && ARGS="$ARGS -log=$HIBERA_LOG"
 [ ! "x$HIBERA_SEEDS" = "x" ] && ARGS="$ARGS -seeds=$HIBERA_SEEDS"
-[ ! "x$HIBERA_ACTIVE" = "x" ] && ARGS="$ARGS -active=$HIBERA_ACTIVE"
 [ ! "x$HIBERA_PROFILE" = "x" ] && ARGS="$ARGS -profile=$HIBERA_PROFILE"
 
 function running() {
