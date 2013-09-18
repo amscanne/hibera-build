@@ -38,6 +38,8 @@ startone() {
     LOGDIR=$(mktemp -d)
     DATADIR=$(mktemp -d)
     TEMPDIRS="$TEMPDIRS $LOGDIR $DATADIR"
+    chmod u+rwx $LOGDIR
+    chmod u+rwx $DATADIR
 
     # Spin-up with the first port as a seed.
     bin/hiberad -port $PORT -log $LOGDIR -data $DATADIR -bind $HOST -seeds $HOST:$FIRSTPORT -domain domain.$PORT run &

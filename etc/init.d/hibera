@@ -20,6 +20,7 @@ ARGS=""
 [ ! "x$HIBERA_BIND" = "x" ] && ARGS="$ARGS -bind=$HIBERA_BIND"
 [ ! "x$HIBERA_PORT" = "x" ] && ARGS="$ARGS -port=$HIBERA_PORT"
 [ ! "x$HIBERA_DOMAIN" = "x" ] && ARGS="$ARGS -domain=$HIBERA_DOMAIN"
+[ ! "x$HIBERA_URL" = "x" ] && ARGS="$ARGS -url=$HIBERA_URL"
 [ ! "x$HIBERA_KEYS" = "x" ] && ARGS="$ARGS -keys=$HIBERA_KEYS"
 [ ! "x$HIBERA_DATA" = "x" ] && ARGS="$ARGS -data=$HIBERA_DATA"
 [ ! "x$HIBERA_LOG" = "x" ] && ARGS="$ARGS -log=$HIBERA_LOG"
@@ -44,14 +45,29 @@ function start() {
 function stop() {
     if running; then
         echo "stopped"
-        kill $(pidof $EXEC)
-        return $?
+        PID=$(pidof $EXEC)
+        if ! kill $PID; then
+            return $?
+        fi
+        COUNT=0
+        while ps $PID >/dev/null 2>&1; do
+            if [ $COUNT -ge 10 ]; then
+                return 1
+            fi
+            sleep 1
+            COUNT=$(($COUNT+1))
+        done
+        return 0
     else
         return 1
     fi
 }
 function restart() {
     kill -HUP $(pidof $EXEC) >/dev/null 2>&1
+    return $?
+}
+function reload() {
+    stop && start
     return $?
 }
 function status() {
@@ -73,8 +89,12 @@ case "$1" in
     stop
     exit $?
     ;;
-  restart|force-reload)
+  restart)
     restart
+    exit $?
+    ;;
+  force-reload)
+    reload
     exit $?
     ;;
   status)

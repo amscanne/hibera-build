@@ -17,12 +17,39 @@ Why not?
 Hibera adds a few things for distributed co-ordination that I believe are useful:
 * Automatic node addition and removal.
 * A useable command-line tool.
-* Simple authentication (with namspaces via CNAMEs).
+* Simple authentication (with namspaces).
 
 It does have several glaring weaknesses at the moment:
 * No real security model.
 * Performance has not been a consideration.
 * It's model for quorum is probably buggy.
+
+As you may have guessed from the weaknesses, this is not yet production-ready.
+
+Philosophy
+==========
+
+This is not a tool built for a static world.
+
+Nodes are automatically added and removed quickly. This means that if you power
+off some instance running Hibera, then it will quickly get shuffled out of the
+cluster and other nodes will take on its data footprint. If you power it back
+on, then it will rejoin and resyncronize with the cluster. This can generate a
+lot of needless traffic.
+
+Hibera is designed for systems that are designed for failure. When a node
+fails, it is presumed dead. This is realistic for modern cloud platforms, where
+instances are ephemeral and eventual failure is assured. However, as a whole
+the system must go on.
+
+Building
+========
+
+Hibera requires at least `go1.1`.
+
+To build Hibera, setup your `GOROOT` and `PATH` appropriately, then type `make`.
+
+You can build packages via `make deb` and `make rpm`.
 
 Command line
 ============
@@ -35,19 +62,19 @@ Internal API
 Locks
 -----
 ```
-    client := NewHiberaClient(addrs, auth, 0)
+    client := NewHiberaClient(addrs, auth, 0, "")
 
     // Acquire a lock (fires an event).
-    //   POST /sync/{key}?timeout={timeout}&name={name}&limit={limit}
+    //   POST /v1.0/sync/{key}?timeout={timeout}&data={data}&limit={limit}
     //
-    // name -- Use the empty string for the default name.
+    // data -- Use the empty string for the default data.
     // limit -- For a lock, this is the number of holders (1 is a mutex).
     // timeout -- Use 0 for no timeout.
-    index, rev, err := client.SyncJoin(key, name, limit, timeout)
+    index, rev, err := client.SyncJoin(key, data, limit, timeout)
 
     // Releasing a lock (fires an event).
-    //   DELETE /locks/{key}?name={name}
-    rev, err = client.SyncLeave(key, name)
+    //   DELETE /locks/{key}?data={data}
+    rev, err = client.SyncLeave(key, data)
 
     // Wait for a lock to be acquired / released.
     //   GET /event/{key}?rev={rev}&timeout={timeout}
@@ -60,37 +87,37 @@ Locks
 Groups
 ------
 ```
-    client := NewHiberaClient(addrs, 0)
+    client := NewHiberaClient(addrs, auth, 0, "")
 
     // Joining a group (fires an event).
-    // NOTE: By default, the member name used will be the address of the
+    // NOTE: By default, the member data used will be the address of the
     // client socket received on the server end. This can be overriden by
-    // providing a name in the join call below. You can actually join multiple
-    // times by providing different names.
-    //   POST /sync/{key}?name={name}&limit={limit}&timeout={timeout}
+    // providing data in the join call below. You can actually join multiple
+    // times by providing different data.
+    //   POST /sync/{key}?data={data}&limit={limit}&timeout={timeout}
     //
-    // name -- Use the empty string to use the default name.
+    // data -- Use the empty string to use the default data.
     // limit -- For a pure group, you should use 0.
     // timeout -- Not used if limit is 0.
-    index, rev, err := client.SyncJoin(group, name, 0, 0)
+    index, rev, err := client.SyncJoin(group, data, 0, 0)
 
     // Leaving a group (fires an event).
-    //   DELETE /sync/{key}?name={name}
+    //   DELETE /sync/{key}?data={data}
     //
-    // name -- Use the empty string to use the default name.
-    rev, err = client.SyncLeave(group, name)
+    // data -- Use the empty string to use the default data.
+    rev, err = client.SyncLeave(group, data)
 
     // List the members of the group.
     // NOTE: Members returned have a strict ordering (the first member is
     // the leader). You can easily implement a service that needs N leaders
     // by selecting the first N members of the group, which will be stable.
-    // Also, you own index for {name} will be returned via the index.
+    // Also, you own index for {data} will be returned via the index.
     // with a prefix of '*'.
-    //   GET /sync/{key}/?name={name}&limit={name}
+    //   GET /sync/{key}/?data={data}&limit={limit}
     //
-    // name -- The name to use for the index.
+    // data -- The data to use for the index.
     // limit -- Use 0 to specify no limit.
-    index, members, rev, err := client.SyncMembers(group, name, limit)
+    index, members, rev, err := client.SyncMembers(group, data, limit)
 
     // Wait for group members to change.
     //   GET /event/{key}?rev={rev}&timeout={timeout}
@@ -103,11 +130,15 @@ Groups
 Data
 ----
 ```
-    client := NewHiberaClient(addrs, auth, 0)
+    client := NewHiberaClient(addrs, auth, 0, "")
 
     // Reading a value.
-    //   GET /data/{key}
-    value, rev, err := client.DataGet(key)
+    // Will return when the value is *not* the given revision.
+    //   GET /data/{key}?rev={rev}&timeout={timeout}
+    //
+    // rev -- Use 0 for any rev.
+    // timeout -- Only wait for a fixed time.
+    value, rev, err := client.DataGet(key, rev, timeout)
 
     // Writing a value (fires an event).
     for {
@@ -115,16 +146,11 @@ Data
         //   POST /data/{key}?rev={rev}
         //
         // rev -- Use 0 for any rev.
-        rev, err = client.DataSet(key, rev+1, newvalue)
+        rev, err = client.DataSet(key, rev.Next(), newvalue)
         if err is nil {
-            break;
+            break
         }
     } 
-
-    // Wait until the key is not at given rev.
-    //   GET /event/{key}?rev={rev}&timeout={timeout}
-    e/ rev -- Use 0 for any rev.
-    rev, err = client.EventWait(key, rev, timeout)
 
     // Delete the data under a key.
     //   DELETE /data/{key}?rev={rev}
@@ -133,6 +159,7 @@ Data
     rev, err = client.DataRemove(key, rev)
 
     // List all data.
+    // (Should be used sparingly).
     //   GET /data/
     items, err = client.DataList()
 ```
@@ -140,7 +167,12 @@ Data
 Events
 ------
 ```
-    client := NewHiberaClient(addrs, 0)
+    client := NewHiberaClient(addrs, auth, 0, "")
+
+    // Wait until the key is not at given rev.
+    //   GET /event/{key}?rev={rev}&timeout={timeout}
+    // rev -- Use 0 for any rev.
+    rev, err = client.EventWait(key, rev, timeout)
 
     // Fire an event manually.
     //   POST /event/{key}?rev={rev}
@@ -154,8 +186,8 @@ HTTP API
 
 The service API is entirely HTTP-based.
 
-Data distribution is done by 301 redirects where necessary, so clients
-*must* support this operation.
+Data distribution is done by 30X redirects where necessary, so clients *must*
+support this operation.
 
 Headers
 -------
@@ -172,11 +204,20 @@ example, supporose a client connects to a server with two TCP sockets, A and B.
            ---A---X Connection dies.
                     Client is still in joined group.
 
+Namespaces
+----------
+
+Data and synchronization is available under independent namespaces. By default,
+the `Host` header is used, but a namespace can be explicitly selected using the
+`X-Namespace` header. Note that only the default namespace (empty string) will
+always exist, no other namespace can be accessed until authorization tokens are
+defined.
+
 /
 ---
 
 * GET
-    Fetches cluster info.
+    Fetches cluster info (JSON).
 
 /sync/{key}
 ---------------
@@ -187,13 +228,13 @@ example, supporose a client connects to a server with two TCP sockets, A and B.
     
     `limit` -- List only up to N members.
     
-    `name` -- Use this name for computing the index.
+    `data` -- Use this data for computing the index.
 
 * POST
 
     Join a synchronization group.
     
-    `name` -- Use to specify a name to join under.
+    `data` -- Use to specify a data to join under.
               One client may join multiple times.
 
     `limit` -- Block on joining until < limit members are in.
@@ -205,7 +246,7 @@ example, supporose a client connects to a server with two TCP sockets, A and B.
 
     Leave the given group.
     
-    `name` -- The name to leave the group.
+    `data` -- The data to leave the group.
 
 /data
 ------
@@ -223,7 +264,6 @@ example, supporose a client connects to a server with two TCP sockets, A and B.
     Get the current data.
 
     `rev` -- Return when the rev is not `rev`.
-             Use 0 to return on the first change.
 
     `timeout` -- Return after `timeout` milliseconds.
 
@@ -296,10 +336,6 @@ example, supporose a client connects to a server with two TCP sockets, A and B.
 
     List all access tokens.
 
-* DELETE
-
-    Delete all access tokens in the system.
-
 /access/{key}
 -----------
 
@@ -309,13 +345,9 @@ example, supporose a client connects to a server with two TCP sockets, A and B.
 
 * POST
 
-    Grant access to a given path for the token.
+    Update access to a given path for the token.
 
     `path` -- The path to modify.
     `read` -- True / false for read permission.
     `write` -- True / false for write permission.
     `execute` -- True / false for synchronization permission.
-
-* DELETE
-
-    Delete the given access token.
