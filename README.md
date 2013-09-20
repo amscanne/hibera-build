@@ -146,17 +146,17 @@ Data
         //   POST /data/{key}?rev={rev}
         //
         // rev -- Use 0 for any rev.
-        rev, err = client.DataSet(key, rev.Next(), newvalue)
-        if err is nil {
+        ok, rev, err := client.DataSet(key, rev.Next(), newvalue)
+        if ok && rev.Equals(rev.Next()) {
             break
         }
-    } 
+    }
 
     // Delete the data under a key.
     //   DELETE /data/{key}?rev={rev}
     //
     // rev -- Use 0 for any rev.
-    rev, err = client.DataRemove(key, rev)
+    ok, rev, err := client.DataRemove(key, rev)
 
     // List all data.
     // (Should be used sparingly).
