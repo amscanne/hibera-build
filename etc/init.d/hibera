@@ -37,7 +37,7 @@ function start() {
         echo "running"
         return 1
     else
-        (cd / && $EXEC run $ARGS </dev/null 2>&1 | logger -t hibera) &
+        (cd / && nohup $EXEC run $ARGS </dev/null 2>&1 | logger -t hibera) &
         echo "started"
         return 0
     fi
