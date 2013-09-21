@@ -40,9 +40,9 @@ clean:
 	@rm -rf debbuild/ rpmbuild/ *.deb *.rpm
 .PHONY: clean
 
-build-%:
+build-%: fmt-%
 	@GOPATH=$(CURDIR) go build hibera/$*
-install-%:
+install-%: fmt-%
 	@GOPATH=$(CURDIR) go install hibera/$*
 doc-%:
 	@mkdir -p doc/pkg/hibera/$*
