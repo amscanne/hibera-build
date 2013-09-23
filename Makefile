@@ -6,6 +6,9 @@ MAINTAINER ?= Adin Scannell <adin@scannell.ca>
 SUMMARY ?= A distributed control plane for reliable applications.
 URL ?= http://github.com/amscanne/hibera
 
+# Our GO source build command.
+go_build = @GOPATH=$(CURDIR) $(1)
+
 ARCH ?= $(shell arch)
 ifeq ($(ARCH),x86_64)
 DEB_ARCH := amd64
@@ -40,22 +43,22 @@ clean:
 	@rm -rf debbuild/ rpmbuild/ *.deb *.rpm
 .PHONY: clean
 
-build-%: fmt-%
-	@GOPATH=$(CURDIR) go build hibera/$*
-install-%: fmt-%
-	@GOPATH=$(CURDIR) go install hibera/$*
+build-%: fmt-% test-%
+	$(call go_build,go build hibera/$*)
+install-%: fmt-% test-%
+	$(call go_build,go install hibera/$*)
 doc-%:
 	@mkdir -p doc/pkg/hibera/$*
-	@GOPATH=$(CURDIR) godoc -html=true hibera/$* > doc/pkg/hibera/$*/index.html
+	$(call go_build,godoc -html=true hibera/$* > doc/pkg/hibera/$*/index.html)
 doc-root:
 	@mkdir -p doc/pkg/hibera
-	@GOPATH=$(CURDIR) godoc -html=true hibera > doc/pkg/hibera/index.html
+	$(call go_build,godoc -html=true hibera > doc/pkg/hibera/index.html)
 test-%:
-	@GOPATH=$(CURDIR) go test hibera/$*
+	$(call go_build,go test hibera/$*)
 bench-%:
-	@GOPATH=$(CURDIR) go test -bench=".*" hibera/$*
+	$(call go_build,go test -bench=".*" hibera/$*)
 fmt-%:
-	@gofmt -l=true -w=true -tabs=false -tabwidth=4 src/hibera/$*
+	$(call go_build,gofmt -l=true -w=true -tabs=false -tabwidth=4 src/hibera/$*)
 
 submodules:
 .PHONY: submodules
@@ -67,7 +70,7 @@ endif
 	@$(MAKE) $(foreach pkg,$(PACKAGES),$*-$(pkg))
 go-doc: doc-root
 
-dist: go-test go-install
+dist: go-install
 	@mkdir -p dist/usr/bin
 	@install -m 0755 bin/* dist/usr/bin
 	@rm -rf dist/etc && cp -ar etc/ dist/etc

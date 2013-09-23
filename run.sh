@@ -42,7 +42,7 @@ startone() {
     chmod u+rwx $DATADIR
 
     # Spin-up with the first port as a seed.
-    bin/hiberad -port $PORT -log $LOGDIR -data $DATADIR -bind $HOST -seeds $HOST:$FIRSTPORT -domain domain.$PORT run &
+    bin/hiberad -debug -port $PORT -log $LOGDIR -data $DATADIR -bind $HOST -seeds $HOST:$FIRSTPORT -domain domain.$PORT run &
     PIDS="$PIDS $!"
     PORT=$(($PORT + 1))
 }
