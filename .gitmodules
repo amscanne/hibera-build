@@ -7,3 +7,6 @@
 [submodule "src/python"]
 	path = src/python
 	url = git@github.com:amscanne/python-hibera
+[submodule "src/github.com/amscanne/hibera"]
+	path = src/github.com/amscanne/hibera
+	url = git@github.com:amscanne/hibera

@@ -22,7 +22,8 @@ $(error Unknown arch "$(ARCH)".)
     endif
 endif
 
-PACKAGES := $(shell cd src/hibera && ls)
+PREFIX := github.com/amscanne/hibera
+PACKAGES := $(shell cd src/$(PREFIX) && ls -1 | grep -v README)
 
 all: dist
 .PHONY: all
@@ -44,21 +45,15 @@ clean:
 .PHONY: clean
 
 build-%: fmt-% test-%
-	$(call go_build,go build hibera/$*)
+	$(call go_build,go build $(PREFIX)/$*)
 install-%: fmt-% test-%
-	$(call go_build,go install hibera/$*)
-doc-%:
-	@mkdir -p doc/pkg/hibera/$*
-	$(call go_build,godoc -html=true hibera/$* > doc/pkg/hibera/$*/index.html)
-doc-root:
-	@mkdir -p doc/pkg/hibera
-	$(call go_build,godoc -html=true hibera > doc/pkg/hibera/index.html)
+	$(call go_build,go install $(PREFIX)/$*)
 test-%:
-	$(call go_build,go test hibera/$*)
+	$(call go_build,go test $(PREFIX)/$*)
 bench-%:
-	$(call go_build,go test -bench=".*" hibera/$*)
+	$(call go_build,go test -bench=".*" $(PREFIX)/$*)
 fmt-%:
-	$(call go_build,gofmt -l=true -w=true -tabs=false -tabwidth=4 src/hibera/$*)
+	$(call go_build,gofmt -l=true -w=true -tabs=false -tabwidth=4 src/$(PREFIX)/$*)
 
 submodules:
 .PHONY: submodules
