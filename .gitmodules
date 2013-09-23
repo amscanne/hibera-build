@@ -1,6 +1,6 @@
 [submodule "src/hibera"]
 	path = src/hibera
-	url = git@github.com:amscanne/gohibera.git
+	url = git@github.com:amscanne/hibera
 [submodule "python"]
 	path = python
 	url = git@github.com:amscanne/python-hibera
