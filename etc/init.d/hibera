@@ -37,7 +37,9 @@ function start() {
         echo "running"
         return 1
     else
-        (cd / && nohup $EXEC run $ARGS </dev/null 2>&1 | logger -t hibera) &
+        cd /
+        $EXEC run $ARGS <&- 2>&1 | logger -t hibera </dev/null >/dev/null 2>&1 &
+        disown
         echo "started"
         return 0
     fi
@@ -51,10 +53,10 @@ function stop() {
         fi
         COUNT=0
         while ps $PID >/dev/null 2>&1; do
-            if [ $COUNT -ge 10 ]; then
+            if [ $COUNT -ge 100 ]; then
                 return 1
             fi
-            sleep 1
+            sleep 0.1
             COUNT=$(($COUNT+1))
         done
         return 0
